@@ -1,0 +1,50 @@
+version: "3.9"
+
+services:
+  api:  #Services for api
+    build: ./backend 
+    depends_on:
+      - db #dependforpostgres db
+    environment:
+      - CONNECTION_STRING=postgres://demo:pass@db/demo_db #from db
+    networks:
+      - network-private
+      - network-public
+
+  web:  #Services for web
+    build: ./frontend
+    depends_on:
+      - api  #dependforapi
+    environment:
+      - API_URL=http://api:3001/data
+    networks:
+      - network-public
+    ports:
+      - "80:3000" 
+
+  db: #Services for postgres db 
+    image: postgres:11.2-alpine
+    environment:
+      POSTGRES_USER: demo
+      POSTGRES_PASSWORD: pass
+      POSTGRES_DB: demo_db
+    volumes:
+      - ./dbpostgress:/var/lip/postgresql 
+      - ./init_sql/:/docker-entrypoint-initdb.d
+      - ./postgres_conf:/etc/postgresql.conf
+    networks:
+      - network-private
+
+
+volumes:
+    dbpostgress: #volumefordatabase
+    postgres_conf: #volumefordatabaseconfiguration
+  
+networks: #two bridge networks public and private
+  network-public:
+    name: network-public
+    driver: bridge
+  network-private:
+    name: network-private
+    driver: bridge
+                 
